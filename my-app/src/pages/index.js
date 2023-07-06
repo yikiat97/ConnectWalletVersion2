@@ -1,78 +1,9 @@
 import Head from "next/head";
 import styles from "@/styles/Home.module.css";
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
-import { getAlgodClient } from "../clients";
-import { useWallet } from "@txnlab/use-wallet";
-import { Indexer } from "algosdk";
-import  SendAlgo  from "@/components/ConnectWalletV2";
-
-
-const network = process.env.NEXT_PUBLIC_NETWORK || "SandNet";
-const algodClient = getAlgodClient(network);
+import SendAlgo from "@/components/ConnectWalletV2";
 
 export default function Home() {
-  const [nfts, setNfts] = useState([]);
-  const [isSeller, setIsSeller] = useState(false);
-  const { activeAddress } = useWallet();
-
-  useEffect(() => {
-    const loadNfts = async () => {
-      // write code to load NFTs
-
-      if (activeAddress) {
-        try {
-          const accountInfo = await algodClient.accountInformation(activeAddress).do();
-          const assets = accountInfo.assets;
-          
-          const fetchedNfts = await Promise.all(
-            
-            assets.map(async (asset) => {
-              const metadata = await algodClient.getAssetByID(asset["asset-id"]).do();
-              let noteMetadata;
-              if (metadata.params.noteb64) {
-                // Parse metadata stored in the note field
-                noteMetadata = JSON.parse(Buffer.from(metadata.params.noteb64, "base64").toString());
-              } else {
-                // Set a default metadata object if noteb64 field is not present
-                noteMetadata = {
-                  name: "Unknown NFT",
-                  description: "Metadata not available",
-                  url: "",
-                  properties: {
-                    standard: "arc69",
-                  },
-                };
-              }
-              return {
-                asset: asset,
-                imgUrl: noteMetadata.url,
-                metadata: noteMetadata,
-              };
-            })
-          );
-    
-          // Filter NFTs with an amount greater than 0
-          const filteredNfts = fetchedNfts.filter(nft => nft.asset.amount > 0);
-    
-          setNfts(filteredNfts);
-          console.log(filteredNfts)
-        } catch (error) {
-          console.error("Error loading NFTs:", error);
-        }
-      }
-    };
-    
-    loadNfts();
-
-    // is active address a buyer or seller account?
-    if (activeAddress === process.env.NEXT_PUBLIC_DEPLOYER_ADDR) {
-      setIsSeller(true);
-    } else {
-      setIsSeller(false);
-    }
-  }, [activeAddress]);
-
   return (
     <>
       <Head>
@@ -84,14 +15,9 @@ export default function Home() {
       <Navbar />
       <main className={styles.main}>
         <div>
-          <h1 className="text-5xl mb-4">Connect ConnectWalletV2</h1>
-          <span className="mb-4">Network: {network}</span>
-          {<SendAlgo></SendAlgo>}
+          <h1 className="text-5xl mb-4">WalletConnect v2 Dapp</h1>
+          <SendAlgo />
         </div>
-        
-        {/* {isSeller && <TransferNFTForm nfts={nfts} />}
-        <NftList nfts={nfts} /> */}
-
       </main>
     </>
   );

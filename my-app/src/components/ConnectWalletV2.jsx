@@ -1,42 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useWallet } from "@txnlab/use-wallet";
-import axios from 'axios';
-const algosdk = require('algosdk');
+const algosdk = require("algosdk");
 import { getAlgodClient } from "../clients";
+import Button from "./Button";
 
 const network = process.env.NEXT_PUBLIC_NETWORK || "SandNet";
 const algod = getAlgodClient(network);
 
 function SendAlgo() {
-  const [fromAddress, setFromAddress] = useState('');
-  const [toAddress, setToAddress] = useState('');
-  const [amountTosend, setAmount] = useState('');
-  const { activeAddress, signTransactions, sendTransactions,signer } = useWallet();
+  const [toAddress, setToAddress] = useState("");
+  const [amountTosend, setAmount] = useState("10000");
+  const { activeAddress, signTransactions, sendTransactions } = useWallet();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        const addressData = activeAddress;
-        const to = toAddress;
-        const amount = 1;
-        
-        let suggestedParams = await algod.getTransactionParams().do();
-        
-          const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-            from: addressData,
-            to,
-            amount,
-            suggestedParams,
-          });
-  
-          // Sign the transaction
-          const signedTxn = await signTransactions([algosdk.encodeUnsignedTransaction(txn)]);
-      
-          // Submit the transaction
-          const res = await sendTransactions(signedTxn, 4);
-          console.log(res)
-        
-      alert(`Transaction successful with ID: `);
+      const addressData = activeAddress;
+      const to = toAddress;
+      let suggestedParams = await algod.getTransactionParams().do();
+
+      const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+        from: addressData,
+        to,
+        amount: Number(amountTosend),
+        suggestedParams,
+      });
+
+      // Sign the transaction
+      const signedTxn = await signTransactions([algosdk.encodeUnsignedTransaction(txn)]);
+
+      // Submit the transaction
+      const res = await sendTransactions(signedTxn, 4);
+      alert(`Transaction successful with ID: ${res.txId}`);
     } catch (error) {
       alert(`An error occurred: ${error.message}`);
     }
@@ -44,33 +39,27 @@ function SendAlgo() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <label>
-        <p>From Address: </p>
-        <input type="text" value={activeAddress} onChange={e => setFromAddress(e.target.value)} />
-      </label>
-      <label>
-      <p>To Address: </p>
-        <input type="text" value={toAddress} onChange={e => setToAddress(e.target.value)} />
-      </label>
-      <label>
-      <p> Amount (in microAlgos):</p>
-        <input type="text" value={amountTosend} onChange={e => setAmount(e.target.value)} />
-      </label>
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="to">
+          From
+        </label>
+        {activeAddress}
+      </div>
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="to">
+          To
+        </label>
+        <input className="w-full" type="text" value={toAddress} onChange={(e) => setToAddress(e.target.value)} />
+      </div>
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="to">
+          Amount (in microAlgos)
+        </label>
+        <input className="w-full" type="text" value={amountTosend} onChange={(e) => setAmount(e.target.value)} />
+      </div>
       <br></br>
       <br></br>
-      <button style={{ 
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    padding: '15px 32px',
-    textAlign: 'center',
-    textDecoration: 'none',
-    display: 'inline-block',
-    fontSize: '16px',
-    margin: '4px 2px',
-    cursor: 'pointer',
-    border: 'none',
-    borderRadius: '4px'
-  }} type="submit">Send Algo</button>
+      <Button label="Submit" onClick={handleSubmit} />
     </form>
   );
 }

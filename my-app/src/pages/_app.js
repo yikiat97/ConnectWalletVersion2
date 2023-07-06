@@ -1,56 +1,47 @@
 import "@/styles/globals.css";
-
-import { PROVIDER_ID, WalletProvider, useInitializeProviders ,reconnectProviders} from '@txnlab/use-wallet'
-import { DeflyWalletConnect } from '@blockshake/defly-connect'
-import { PeraWalletConnect } from '@perawallet/connect'
-import { WalletConnectModalSign } from '@walletconnect/modal-sign-html'
+import { PROVIDER_ID, WalletProvider, useInitializeProviders, reconnectProviders } from "@txnlab/use-wallet";
+import { WalletConnectModalSign } from "@walletconnect/modal-sign-html";
 import { useEffect } from "react";
-const algosdk = require('algosdk');
+import { getNetworkCredentials } from "@/clients";
+const algosdk = require("algosdk");
 
-
-
-
+const network = process.env.NEXT_PUBLIC_NETWORK || "SandNet";
+const { algod } = getNetworkCredentials(network);
 
 export default function App({ Component, pageProps }) {
-
-    const walletProviders = useInitializeProviders({
-        providers: [
-          { id: PROVIDER_ID.DEFLY, clientStatic: DeflyWalletConnect },
-          { id: PROVIDER_ID.PERA, clientStatic: PeraWalletConnect, clientOptions: { shouldShowSignTxnToast: false } },
-          {
-            id: PROVIDER_ID.WALLETCONNECT, clientOptions: { shouldShowSignTxnToast: false },
-            clientStatic: WalletConnectModalSign,
-            clientOptions: {
-              projectId: 'eac3a7121b76e1f5b10573a85811e189',
-              metadata: {
-                name: 'Example Dapp',
-                description: 'Example Dapp',
-                url: '#',
-                icons: ['https://walletconnect.com/walletconnect-logo.png']
-              },
-              modalOptions: {
-                themeMode: 'dark'
-              }
-            }
-          },
-          { id: PROVIDER_ID.EXODUS }
-        ],
-        nodeConfig: {
-          network: 'testnet',
-          nodeServer: 'https://testnet-api.algonode.cloud',
-          nodeToken: '',
-          nodePort: '443'
+  const walletProviders = useInitializeProviders({
+    providers: [
+      {
+        id: PROVIDER_ID.WALLETCONNECT,
+        clientOptions: { shouldShowSignTxnToast: false },
+        clientStatic: WalletConnectModalSign,
+        clientOptions: {
+          projectId: "788742a0aee616db952deca86f49cdb3",
+          metadata: {
+            name: "Example Dapp",
+            description: "Example Dapp",
+            url: "#",
+            icons: ["https://walletconnect.com/walletconnect-logo.png"],
+          }
         },
-        algosdkStatic: algosdk
-      })
-    
-    useEffect(() => {
-        reconnectProviders(walletProviders);
-    }, []);
+      }
+    ],
+    nodeConfig: {
+      network: network.toLowerCase(),
+      nodeServer: algod.address,
+      nodeToken: algod.token,
+      nodePort: algod.port
+    },
+    algosdkStatic: algosdk,
+  });
 
-    return (
-        <WalletProvider value={walletProviders}>
-            <Component {...pageProps} />
-        </WalletProvider>
-    );
+  useEffect(() => {
+    if (walletProviders) reconnectProviders(walletProviders);
+  }, [walletProviders]);
+
+  return (
+    <WalletProvider value={walletProviders}>
+      <Component {...pageProps} />
+    </WalletProvider>
+  );
 }
