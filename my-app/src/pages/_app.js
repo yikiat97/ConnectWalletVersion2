@@ -35,10 +35,6 @@ export default function App({ Component, pageProps }) {
     algosdkStatic: algosdk,
   });
 
-  useEffect(() => {
-    if (walletProviders) reconnectProviders(walletProviders);
-  }, [walletProviders]);
-
   return (
     <WalletProvider value={walletProviders}>
       <Component {...pageProps} />
